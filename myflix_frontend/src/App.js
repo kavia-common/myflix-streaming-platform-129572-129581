@@ -1,48 +1,60 @@
-import React, { useState, useEffect } from 'react';
-import logo from './logo.svg';
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import './App.css';
+import './index.css';
+import HomePage from './pages/HomePage';
+import LoginPage from './pages/LoginPage';
+import SignupPage from './pages/SignupPage';
+import SearchPage from './pages/SearchPage';
+import DetailsPage from './pages/DetailsPage';
+import WatchlistPage from './pages/WatchlistPage';
+import AppHeader from './components/AppHeader';
+import BottomNav from './components/BottomNav';
+import { AuthProvider, useAuth } from './state/AuthContext';
+import { WatchlistProvider } from './state/WatchlistContext';
+import PlaybackModal from './components/PlaybackModal';
+
+// PUBLIC_INTERFACE
+function ProtectedRoute({ children }) {
+  /** Protects routes by requiring a logged-in user; redirects to login otherwise. */
+  const { user } = useAuth();
+  if (!user) return <Navigate to="/login" replace />;
+  return children;
+}
+
+// PUBLIC_INTERFACE
+function AppShell() {
+  /** Main layout including header, routed views, and bottom navigation. */
+  return (
+    <div className="myflix-app">
+      <AppHeader />
+      <main className="app-main">
+        <Routes>
+          <Route path="/" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
+          <Route path="/search" element={<ProtectedRoute><SearchPage /></ProtectedRoute>} />
+          <Route path="/details/:id" element={<ProtectedRoute><DetailsPage /></ProtectedRoute>} />
+          <Route path="/watchlist" element={<ProtectedRoute><WatchlistPage /></ProtectedRoute>} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/signup" element={<SignupPage />} />
+        </Routes>
+      </main>
+      <BottomNav />
+      <PlaybackModal />
+    </div>
+  );
+}
 
 // PUBLIC_INTERFACE
 function App() {
-  const [theme, setTheme] = useState('light');
-
-  // Effect to apply theme to document element
-  useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme);
-  }, [theme]);
-
-  // PUBLIC_INTERFACE
-  const toggleTheme = () => {
-    setTheme(prevTheme => prevTheme === 'light' ? 'dark' : 'light');
-  };
-
+  /** Top-level application with providers for auth and watchlist. */
   return (
-    <div className="App">
-      <header className="App-header">
-        <button 
-          className="theme-toggle" 
-          onClick={toggleTheme}
-          aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
-        >
-          {theme === 'light' ? '🌙 Dark' : '☀️ Light'}
-        </button>
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <p>
-          Current theme: <strong>{theme}</strong>
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <AuthProvider>
+      <WatchlistProvider>
+        <Router>
+          <AppShell />
+        </Router>
+      </WatchlistProvider>
+    </AuthProvider>
   );
 }
 
